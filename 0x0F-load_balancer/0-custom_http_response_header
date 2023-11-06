@@ -1,47 +1,15 @@
 #!/usr/bin/env bash
-# Install nginx server, add content to index.html, 404.html, and configure custom HTTP response header
+# Configure Nginx so that its HTTP response contains a custom header
+# HTTP response contains a custom header (on web-01 and web-02)
+var=$(hostname)
+new_string="error_page 404 \/custom_404.html;\n location \/redirect_me {\n return 301 \$scheme:\/\/www.google.com;"
+new_string2="server {\n\tadd_header X-Served-By $var;"
 
-# Update and upgrade packages
-sudo apt -y update
-@@ -8,16 +7,16 @@ sudo apt -y upgrade
-# Install Nginx
-sudo apt -y install nginx
-
-# Start Nginx
+apt-get update -y
+apt-get install nginx -y
+echo "Hello World!" > /usr/share/nginx/html/index.html
+mkdir -p /var/www/html
+echo "Ceci n'est pas une page" > /var/www/html/custom_404.html
+sudo sed -i -E "s/^[^#]+location \/ \{/$new_string/" /etc/nginx/sites-available/default
+sudo sed -i -E "s/^server \{/$new_string2/" /etc/nginx/sites-available/default
 sudo service nginx start
-# Start Nginx using systemctl
-sudo systemctl start nginx
-
-# Set permissions for the web directory
-sudo chown -R "$USER":"$USER" /var/www/html
-sudo chmod -R 755 /var/www
-# Set permissions for the web directory (www-data is the Nginx user)
-sudo chown -R www-data:www-data /var/www/html
-sudo chmod -R 755 /var/www/html
-
-# Add content to index.html and 404.html
-sudo echo 'Hello World!' | sudo tee /var/www/html/index.html
-sudo echo -e "Ceci n'est pas une page\n" | sudo tee /var/www/html/404.html
-echo 'Hello World!' | sudo tee /var/www/html/index.html
-echo -e "Ceci n'est pas une page\n" | sudo tee /var/www/html/404.html
-
-# Configure default Nginx server block
-sudo bash -c 'cat <<EOL > /etc/nginx/sites-enabled/default
-@@ -27,17 +26,21 @@ server {
-    root /var/www/html;
-    index index.html index.htm index.nginx-debian.html;
-    server_name _;
-    location /redirect_me {
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-    }
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-    error_page 404 /404.html;
-    location = /404.html {
-        root /var/www/html;
-        internal;
-    }
-    add_header X-Served-By \$hostname;
-}
-EOL'
