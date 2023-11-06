@@ -1,0 +1,13 @@
+!/usr/bin/env bash
+# server-01 login commands
+#!/usr/bin/env bash
+# server-01 login
+
+# setting up the SSH-agent 
+eval $("ssh-agent")
+
+# path to IdentifyFile
+ssh-add 
+ssh-add ~/.ssh/id_rsa
+
+ssh ubuntu@35.153.98.187
